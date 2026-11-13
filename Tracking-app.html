@@ -1,0 +1,1356 @@
+
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sengly Tracking - កត់ត្រាចំណូលចំណាយ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Kantumruy Pro for crisp Khmer typography & Plus Jakarta Sans for numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js for clean analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        khmer: ['"Kantumruy Pro"', 'sans-serif'],
+                        num: ['"Plus Jakarta Sans"', '"Kantumruy Pro"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Kantumruy Pro', sans-serif;
+            background-color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-num {
+            font-family: 'Plus Jakarta Sans', 'Kantumruy Pro', sans-serif;
+        }
+        /* Hide scrollbars for horizontal chip lists */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Smooth transitions */
+        .tab-active {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(24px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Mobile App Container (Direct Access - Instant Load & Permanent Storage) -->
+    <div id="mainAppContainer" class="max-w-md mx-auto min-h-screen bg-slate-50 shadow-2xl relative flex flex-col pb-24">
+        
+        <!-- Top Header -->
+        <header class="bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-800 text-white pt-5 pb-16 px-5 rounded-b-[2rem] shadow-lg relative overflow-hidden">
+            <!-- Subtle decorative circles -->
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute bottom-0 -left-10 w-32 h-32 bg-indigo-400/20 rounded-full blur-xl pointer-events-none"></div>
+
+            <div class="flex items-center justify-between relative z-10 mb-5">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner shrink-0">
+                        <i data-lucide="wallet" class="w-5 h-5 text-amber-300"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <h1 class="font-num font-bold text-lg tracking-tight leading-tight truncate">Sengly Tracking</h1>
+                            <span id="cloudSyncIndicator" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-[10px] font-semibold text-emerald-200 shrink-0" title="ទិន្នន័យរក្សាទុកជាអចិន្ត្រៃយ៍">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                រក្សាទុកអចិន្ត្រៃយ៍
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-indigo-200 truncate">កត់ត្រាចំណូលចំណាយប្រចាំថ្ងៃ</p>
+                    </div>
+                </div>
+
+                <!-- Display Currency Switcher & Data Backup Menu -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <button id="currencyToggleBtn" onclick="toggleDisplayCurrency()" class="bg-white/15 hover:bg-white/25 active:scale-95 transition backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+                        <span id="currencyBadgeIcon" class="text-amber-300 font-num font-bold">$</span>
+                        <span id="currencyBadgeText">USD</span>
+                        <i data-lucide="repeat" class="w-3.5 h-3.5 opacity-80"></i>
+                    </button>
+                    <button onclick="openSettingsModal()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition border border-white/10" title="រក្សាទុក & ទាញយកទិន្នន័យ">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-amber-300"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Period Toggle (Monthly vs Yearly) & Date Selector -->
+            <div class="relative z-10 bg-black/20 backdrop-blur-md p-1.5 rounded-2xl flex items-center justify-between gap-2 border border-white/10">
+                <div class="flex bg-white/10 rounded-xl p-0.5">
+                    <button id="viewMonthlyBtn" onclick="setPeriodMode('monthly')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-brand-700 shadow-sm transition">
+                        ប្រចាំខែ
+                    </button>
+                    <button id="viewYearlyBtn" onclick="setPeriodMode('yearly')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-100 hover:text-white transition">
+                        ប្រចាំឆ្នាំ
+                    </button>
+                </div>
+
+                <!-- Dynamic Month / Year Picker -->
+                <div class="flex items-center gap-1 pr-1">
+                    <button onclick="changePeriod(-1)" class="p-1.5 rounded-lg hover:bg-white/15 active:scale-90 transition">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    </button>
+                    <span id="currentPeriodLabel" class="text-xs font-semibold px-1.5 min-w-[95px] text-center select-none">
+                        វិច្ឆិកា 2026
+                    </span>
+                    <button onclick="changePeriod(1)" class="p-1.5 rounded-lg hover:bg-white/15 active:scale-90 transition">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area (Overlapping Header) -->
+        <main class="px-4 -mt-10 relative z-20 space-y-5 flex-1">
+
+            <!-- Summary Dashboard Card -->
+            <section class="bg-white rounded-3xl p-5 shadow-md border border-slate-100">
+                <!-- Net Balance -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-medium text-slate-400 block mb-0.5" id="balanceSubtitle">សមតុល្យនៅសល់ប្រចាំខែ</span>
+                        <div class="flex items-baseline gap-2">
+                            <h2 id="totalBalanceDisplay" class="font-num text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">$0.00</h2>
+                        </div>
+                    </div>
+                    <div id="balanceStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 flex items-center gap-1">
+                        <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                        <span>ល្អប្រសើរ</span>
+                    </div>
+                </div>
+
+                <!-- Income vs Expense Grid -->
+                <div class="grid grid-cols-2 gap-3 pt-4">
+                    <!-- Total Income -->
+                    <div class="bg-emerald-50/70 border border-emerald-100/80 rounded-2xl p-3.5">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <div class="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+                                <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-xs font-semibold text-emerald-800">ចំណូលសរុប</span>
+                        </div>
+                        <p id="totalIncomeDisplay" class="font-num font-bold text-base sm:text-lg text-emerald-700 truncate">$0.00</p>
+                    </div>
+
+                    <!-- Total Expense -->
+                    <div class="bg-rose-50/70 border border-rose-100/80 rounded-2xl p-3.5">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <div class="w-7 h-7 rounded-xl bg-rose-500/15 text-rose-600 flex items-center justify-center">
+                                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-xs font-semibold text-rose-800">ចំណាយសរុប</span>
+                        </div>
+                        <p id="totalExpenseDisplay" class="font-num font-bold text-base sm:text-lg text-rose-700 truncate">$0.00</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Category Breakdown Section -->
+            <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between mb-3.5">
+                    <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-brand-600"></i>
+                        <span>ការចំណាយតាមប្រភេទមុឺនុយ</span>
+                    </h3>
+                    <span id="expenseRatioLabel" class="text-[11px] font-medium text-slate-400">ប្រើប្រាស់ 0% នៃចំណូល</span>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Compact Doughnut Chart -->
+                    <div class="w-24 h-24 shrink-0 relative flex items-center justify-center">
+                        <canvas id="expenseChart"></canvas>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span id="chartCenterPercent" class="font-num text-xs font-bold text-slate-600">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- 3 Category Progress Bars -->
+                    <div class="flex-1 space-y-2.5">
+                        <!-- Food -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-orange-500"></span>ម្ហូបអាហារ
+                                </span>
+                                <span id="catFoodAmount" class="font-num font-bold text-slate-800">$0.00</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div id="catFoodBar" class="h-full bg-orange-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Drinks -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-sky-500"></span>ភេសជ្ជៈ
+                                </span>
+                                <span id="catDrinkAmount" class="font-num font-bold text-slate-800">$0.00</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div id="catDrinkBar" class="h-full bg-sky-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Daily Items / Clothing -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-purple-500"></span>សម្ភារៈប្រើប្រាស់
+                                </span>
+                                <span id="catItemAmount" class="font-num font-bold text-slate-800">$0.00</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div id="catItemBar" class="h-full bg-purple-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Action Entry Buttons (4 dedicated menus) -->
+            <section>
+                <div class="flex items-center justify-between mb-2.5 px-1">
+                    <h3 class="font-bold text-sm text-slate-800">កត់ត្រាថ្មី (ជ្រើសរើសមុឺនុយ)</h3>
+                    <span class="text-[11px] text-slate-400">ចុចដើម្បីបញ្ចូលទិន្នន័យ</span>
+                </div>
+                <div class="grid grid-cols-4 gap-2.5">
+                    <!-- Income Button -->
+                    <button onclick="openEntryModal('income')" class="bg-white hover:bg-emerald-50 active:scale-95 transition p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-1.5 group">
+                        <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition flex items-center justify-center">
+                            <i data-lucide="banknote" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700 leading-tight">ចំណូល<br><span class="text-[10px] font-normal text-slate-400">ប្រាក់ខែ</span></span>
+                    </button>
+
+                    <!-- Food Menu Button -->
+                    <button onclick="openEntryModal('food')" class="bg-white hover:bg-orange-50 active:scale-95 transition p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-1.5 group">
+                        <div class="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition flex items-center justify-center">
+                            <i data-lucide="utensils" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700 leading-tight">មុឺនុយ<br><span class="text-[10px] font-normal text-slate-400">ម្ហូបអាហារ</span></span>
+                    </button>
+
+                    <!-- Drink Menu Button -->
+                    <button onclick="openEntryModal('drink')" class="bg-white hover:bg-sky-50 active:scale-95 transition p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-1.5 group">
+                        <div class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 group-hover:bg-sky-500 group-hover:text-white transition flex items-center justify-center">
+                            <i data-lucide="coffee" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700 leading-tight">មុឺនុយ<br><span class="text-[10px] font-normal text-slate-400">ភេសជ្ជៈ</span></span>
+                    </button>
+
+                    <!-- Daily Items Menu Button -->
+                    <button onclick="openEntryModal('item')" class="bg-white hover:bg-purple-50 active:scale-95 transition p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-1.5 group">
+                        <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition flex items-center justify-center">
+                            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700 leading-tight">មុឺនុយ<br><span class="text-[10px] font-normal text-slate-400">សម្ភារៈ</span></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Transaction History Section -->
+            <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4 text-brand-600"></i>
+                        <span>ប្រវត្តិនៃការកត់ត្រា</span>
+                    </h3>
+                    <span id="recordCountBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-num">0 ប្រតិបត្តិការ</span>
+                </div>
+
+                <!-- Filter Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-3 mb-2 border-b border-slate-100">
+                    <button onclick="setHistoryFilter('all')" data-filter="all" class="filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-600 text-white shrink-0 transition">
+                        ទាំងអស់
+                    </button>
+                    <button onclick="setHistoryFilter('income')" data-filter="income" class="filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
+                        ចំណូល
+                    </button>
+                    <button onclick="setHistoryFilter('food')" data-filter="food" class="filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
+                        ម្ហូបអាហារ
+                    </button>
+                    <button onclick="setHistoryFilter('drink')" data-filter="drink" class="filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
+                        ភេសជ្ជៈ
+                    </button>
+                    <button onclick="setHistoryFilter('item')" data-filter="item" class="filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
+                        សម្ភារៈប្រើប្រាស់
+                    </button>
+                </div>
+
+                <!-- Transactions List -->
+                <div id="transactionList" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-0.5">
+                    <!-- Dynamic items injected here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Floating Bottom Quick Add Bar -->
+        <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-lg border-t border-slate-200/80 px-5 py-3 flex items-center justify-between z-30">
+            <div class="text-xs">
+                <span class="text-slate-400 block">អត្រាប្តូរប្រាក់បច្ចុប្បន្ន</span>
+                <span class="font-num font-bold text-slate-700">$1 = 4,100 ៛</span>
+            </div>
+            <button onclick="openEntryModal('food')" class="bg-brand-600 hover:bg-brand-700 active:scale-95 transition text-white px-5 py-2.5 rounded-2xl font-semibold text-sm shadow-lg shadow-brand-600/30 flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>កត់ត្រាថ្មី</span>
+            </button>
+        </div>
+
+        <!-- ENTRY MODAL (Bottom Sheet Style for Mobile) -->
+        <div id="entryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-3xl p-6 shadow-2xl animate-slide-up max-h-[92vh] overflow-y-auto">
+                <!-- Modal Handle -->
+                <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="modalTitle" class="font-bold text-lg text-slate-900">កត់ត្រាចំណាយ</h3>
+                    <button onclick="closeEntryModal()" class="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- 4 Menu Tabs inside Modal for easy switching -->
+                <div class="grid grid-cols-4 gap-1.5 bg-slate-100 p-1 rounded-2xl mb-5">
+                    <button type="button" onclick="switchModalTab('income')" id="tab-income" class="modal-tab py-2 px-1 rounded-xl text-xs font-bold transition text-center">
+                        ចំណូល
+                    </button>
+                    <button type="button" onclick="switchModalTab('food')" id="tab-food" class="modal-tab py-2 px-1 rounded-xl text-xs font-bold transition text-center">
+                        មុឺនុយម្ហូប
+                    </button>
+                    <button type="button" onclick="switchModalTab('drink')" id="tab-drink" class="modal-tab py-2 px-1 rounded-xl text-xs font-bold transition text-center">
+                        ភេសជ្ជៈ
+                    </button>
+                    <button type="button" onclick="switchModalTab('item')" id="tab-item" class="modal-tab py-2 px-1 rounded-xl text-xs font-bold transition text-center">
+                        សម្ភារៈ
+                    </button>
+                </div>
+
+                <!-- Entry Form -->
+                <form id="entryForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                    <input type="hidden" id="entryId" value="">
+                    <input type="hidden" id="entryCategory" value="food">
+
+                    <!-- Quick Preset Chips (Dynamic per Menu) -->
+                    <div id="presetContainer">
+                        <label id="presetLabel" class="block text-xs font-semibold text-slate-500 mb-2">ជ្រើសរើសរហ័ស៖</label>
+                        <div id="presetChips" class="flex flex-wrap gap-1.5">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Item / Dish / Drink / Source Name Input -->
+                    <div>
+                        <label id="nameInputLabel" for="entryName" class="block text-xs font-bold text-slate-700 mb-1.5">ឈ្មោះមុខម្ហូប</label>
+                        <div class="relative">
+                            <input type="text" id="entryName" required placeholder="ឧ. បាយស្រូប, សម្លកកូរ..."
+                                class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 outline-none text-sm font-medium transition">
+                        </div>
+                    </div>
+
+                    <!-- Amount & Input Currency Selector -->
+                    <div>
+                        <label for="entryAmount" class="block text-xs font-bold text-slate-700 mb-1.5">ចំនួនទឹកប្រាក់ / តម្លៃ</label>
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <input type="number" id="entryAmount" step="any" min="0.01" required placeholder="0.00"
+                                    class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 outline-none font-num text-base font-bold transition">
+                            </div>
+                            <!-- Input Currency Selector (USD or KHR) -->
+                            <div class="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shrink-0">
+                                <button type="button" id="inputCurrUSD" onclick="setInputCurrency('USD')" class="px-3.5 py-2 rounded-xl text-xs font-num font-bold bg-white text-brand-700 shadow-xs transition">
+                                    $ USD
+                                </button>
+                                <button type="button" id="inputCurrKHR" onclick="setInputCurrency('KHR')" class="px-3.5 py-2 rounded-xl text-xs font-num font-bold text-slate-500 transition">
+                                    ៛ KHR
+                                </button>
+                            </div>
+                        </div>
+                        <p id="conversionHint" class="text-[11px] text-slate-400 mt-1 font-num">ស្មើនឹង 0 ៛</p>
+                    </div>
+
+                    <!-- Date Input -->
+                    <div>
+                        <label for="entryDate" class="block text-xs font-bold text-slate-700 mb-1.5">កាលបរិច្ឆេទ</label>
+                        <input type="date" id="entryDate" required
+                            class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 outline-none font-num text-sm font-medium transition">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitBtn"
+                        class="w-full py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-brand-600/25 transition flex items-center justify-center gap-2 mt-2">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span>រក្សាទុកទិន្នន័យ</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- DATA BACKUP & PROTECTION SETTINGS MODAL -->
+        <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-3xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
+                        <span>ការពារ & រក្សាទុកទិន្នន័យ</span>
+                    </h3>
+                    <button onclick="closeSettingsModal()" class="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-3.5 text-sm">
+                    <div class="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80">
+                        <div class="flex items-center gap-2.5 mb-1.5">
+                            <i data-lucide="cloud-check" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+                            <h4 class="font-bold text-emerald-900 text-xs sm:text-sm">រក្សាទុកដោយស្វ័យប្រវត្តិជារៀងរហូត</h4>
+                        </div>
+                        <p class="text-xs text-emerald-800/90 leading-relaxed">
+                            រាល់ទិន្នន័យចំណូល និងចំណាយទាំងអស់របស់អ្នកត្រូវបានរក្សាទុកដោយស្វ័យប្រវត្តិទាំងក្នុងឧបករណ៍ និងប្រព័ន្ធ Cloud ដោយមិនបាច់បង្កើតគណនីឡើយ ហើយនឹងមិនបាត់បង់ទេ លុះត្រាតែអ្នកចុចលុបដោយខ្លួនឯង។
+                        </p>
+                        <div class="mt-2.5 pt-2 border-t border-emerald-200/60 flex items-center justify-between text-[11px] text-emerald-700">
+                            <span>ចំនួនកំណត់ត្រាសរុប៖</span>
+                            <span id="settingsTotalCount" class="font-num font-bold">0 ប្រតិបត្តិការ</span>
+                        </div>
+                    </div>
+
+                    <!-- Export / Backup JSON -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                        <h4 class="font-bold text-slate-800 text-xs">ទាញយកឯកសារបម្រុងទុក (Backup)</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">
+                            អ្នកអាចទាញយកទិន្នន័យទាំងអស់ទុកជាឯកសារ (JSON) ក្នុងទូរស័ព្ទ ដើម្បីទុកប្រើប្រាស់ ឬផ្ទេរទៅទូរស័ព្ទថ្មីនៅពេលក្រោយ។
+                        </p>
+                        <button type="button" onclick="exportBackupJSON()" class="w-full py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>ទាញយកទិន្នន័យទុក (Export Backup)</span>
+                        </button>
+                    </div>
+
+                    <!-- Import / Restore JSON -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                        <h4 class="font-bold text-slate-800 text-xs">ស្ដារទិន្នន័យឡើងវិញ (Restore)</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">
+                            ជ្រើសរើសឯកសារ Backup (.json) ដែលអ្នកធ្លាប់បានទាញយក ដើម្បីបញ្ចូលទិន្នន័យត្រឡប់មកវិញ។
+                        </p>
+                        <input type="file" id="restoreFileInput" accept=".json,application/json" class="hidden" onchange="handleRestoreFile(event)">
+                        <button type="button" onclick="document.getElementById('restoreFileInput').click()" class="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 active:scale-[0.99] text-slate-700 border border-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition">
+                            <i data-lucide="upload" class="w-4 h-4 text-brand-600"></i>
+                            <span>បញ្ចូលឯកសារទិន្នន័យ (Restore Backup)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STRICT DELETION CONFIRMATION BOX -->
+        <div id="confirmBox" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-2xl text-center">
+                <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h4 id="confirmTitle" class="font-bold text-base text-slate-900 mb-1.5">បញ្ជាក់ការលុបទិន្នន័យ</h4>
+                <p id="confirmMessage" class="text-xs text-slate-600 leading-relaxed mb-5">
+                    តើអ្នកពិតជាចង់លុបទិន្នន័យនេះមែនទេ? ទិន្នន័យដែលបានលុបមិនអាចត្រឡប់វិញបានទេ។
+                </p>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="closeConfirmBox()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition">
+                        បោះបង់
+                    </button>
+                    <button id="confirmActionBtn" class="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition">
+                        យល់ព្រមលុប
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 z-50 opacity-0 pointer-events-none transition-all duration-300 -translate-y-4">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+            <span id="toastMessage">បានរក្សាទុកជោគជ័យ!</span>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            signInWithCustomToken,
+            signInAnonymously,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            doc,
+            addDoc,
+            updateDoc,
+            deleteDoc,
+            onSnapshot
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // 1. FIREBASE INITIALIZATION & CONSTANTS
+        // ==========================================
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sengly-tracking-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config
+            ? JSON.parse(__firebase_config)
+            : { apiKey: "", authDomain: "", projectId: "" };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const EXCHANGE_RATE = 4100; // $1 = 4,100 KHR
+        const KHMER_MONTHS = [
+            'មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា',
+            'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ'
+        ];
+
+        // Menu Configuration with Khmer Presets
+        const MENU_CONFIG = {
+            income: {
+                title: 'កត់ត្រាចំណូលប្រចាំខែ',
+                nameLabel: 'ប្រភពចំណូល (ឧ. ប្រាក់ខែ, ចំណូលបន្ថែម)',
+                placeholder: 'បញ្ចូលប្រភពចំណូល...',
+                presets: ['ប្រាក់ខែគោល', 'ប្រាក់បន្ថែមម៉ោង', 'ចំណូលលក់ដូរ', 'ប្រាក់រង្វាន់', 'ចំណូលផ្សេងៗ'],
+                color: 'emerald',
+                icon: 'banknote'
+            },
+            food: {
+                title: 'មុឺនុយម្ហូបអាហារ',
+                nameLabel: 'ឈ្មោះមុខម្ហូបដែលបានទិញ',
+                placeholder: 'ឧ. បាយស្រូប, គុយទាវ, សម្លកកូរ...',
+                presets: ['បាយស្រូប', 'គុយទាវ', 'សម្លកកូរ', 'ឆាគ្រឿង', 'បាយឆា', 'នំបញ្ចុក', 'អាហារថ្ងៃត្រង់', 'អាហារពេលល្ងាច'],
+                color: 'orange',
+                icon: 'utensils'
+            },
+            drink: {
+                title: 'មុឺនុយភេសជ្ជៈ',
+                nameLabel: 'ឈ្មោះភេសជ្ជៈដែលបានទិញ',
+                placeholder: 'ឧ. កាហ្វេទឹកដោះគោទឹកកក, តែបៃតង, ទឹកសុទ្ធ...',
+                presets: ['កាហ្វេទឹកដោះគោទឹកកក', 'តែបៃតង', 'ទឹកសុទ្ធ', 'ភេសជ្ជៈប៉ូវកម្លាំង', 'ទឹកផ្លែឈើ', 'កាហ្វេខ្មៅ', 'តែក្រូចឆ្មារ'],
+                color: 'sky',
+                icon: 'coffee'
+            },
+            item: {
+                title: 'មុឺនុយសម្ភារៈប្រើប្រាស់',
+                nameLabel: 'ឈ្មោះសម្ភារៈប្រើប្រាស់ (សំលៀកបំពាក់ ។ល។)',
+                placeholder: 'ឧ. សំលៀកបំពាក់, ស្បែកជើង, សាប៊ូ...',
+                presets: ['សំលៀកបំពាក់', 'ស្បែកជើង', 'សាប៊ូ/ថ្នាំដុសធ្មេញ', 'គ្រឿងសម្អាង', 'របស់ប្រើប្រាស់ទូទៅ', 'កាតទូរស័ព្ទ / អ៊ីនធឺណិត'],
+                color: 'purple',
+                icon: 'shopping-bag'
+            }
+        };
+
+        // App State
+        const LOCAL_STORAGE_KEY = 'sengly_tracking_permanent_records_v1';
+        let currentUser = null;
+        let unsubscribeTransactions = null;
+        let transactions = [];
+        let displayCurrency = 'USD'; // 'USD' or 'KHR'
+        let inputCurrency = 'USD';   // 'USD' or 'KHR'
+        let periodMode = 'monthly';  // 'monthly' or 'yearly'
+        let currentDate = new Date();
+        let historyFilter = 'all';
+        let expenseChartInstance = null;
+        let pendingDeleteAction = null;
+
+        function loadFromLocalStorage() {
+            try {
+                const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        transactions = parsed;
+                    }
+                }
+            } catch (e) {
+                console.error('Local storage read error:', e);
+            }
+        }
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(transactions));
+            } catch (e) {
+                console.error('Local storage write error:', e);
+            }
+        }
+
+        // ==========================================
+        // 2. AUTOMATIC INITIALIZATION (INSTANT + CLOUD SYNC)
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            loadFromLocalStorage();
+            initChart();
+            updateUI();
+            lucide.createIcons();
+
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else if (!auth.currentUser) {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn('Running in offline/local persistent mode:', err);
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    subscribeToCloudTransactions(user.uid);
+                }
+            });
+        });
+
+        // ==========================================
+        // 3. CLOUD FIRESTORE REAL-TIME SYNC
+        // ==========================================
+        function subscribeToCloudTransactions(uid) {
+            if (!uid) return;
+            if (unsubscribeTransactions) {
+                unsubscribeTransactions();
+            }
+
+            // Strict path rule: /artifacts/{appId}/users/{userId}/{collectionName}
+            const txColRef = collection(db, 'artifacts', appId, 'users', uid, 'transactions');
+
+            unsubscribeTransactions = onSnapshot(
+                txColRef,
+                (snapshot) => {
+                    const cloudLoaded = [];
+                    snapshot.forEach((docSnap) => {
+                        cloudLoaded.push({
+                            id: docSnap.id,
+                            ...docSnap.data()
+                        });
+                    });
+                    if (cloudLoaded.length > 0 || transactions.length === 0) {
+                        transactions = cloudLoaded;
+                        saveToLocalStorage();
+                        updateUI();
+                    }
+                },
+                (error) => {
+                    console.warn('Cloud sync fallback to local storage:', error);
+                }
+            );
+        }
+
+        // ==========================================
+        // 4. FORMATTING HELPERS
+        // ==========================================
+        function formatMoney(amountInUSD, targetCurrency = displayCurrency) {
+            if (targetCurrency === 'USD') {
+                return '$' + amountInUSD.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } else {
+                const khr = Math.round((amountInUSD * EXCHANGE_RATE) / 100) * 100;
+                return khr.toLocaleString('en-US') + ' ៛';
+            }
+        }
+
+        function formatKhmerDate(dateStr) {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            const monthName = KHMER_MONTHS[parseInt(m, 10) - 1] || m;
+            return `${parseInt(d, 10)} ${monthName} ${y}`;
+        }
+
+        // ==========================================
+        // 5. PERIOD & CURRENCY CONTROLS
+        // ==========================================
+        window.toggleDisplayCurrency = function() {
+            displayCurrency = displayCurrency === 'USD' ? 'KHR' : 'USD';
+            document.getElementById('currencyBadgeIcon').textContent = displayCurrency === 'USD' ? '$' : '៛';
+            document.getElementById('currencyBadgeText').textContent = displayCurrency;
+            updateUI();
+            showToast(`ប្តូរការបង្ហាញទៅជា ${displayCurrency === 'USD' ? 'ដុល្លារ ($)' : 'ប្រាក់រៀល (៛)'}`);
+        };
+
+        window.setPeriodMode = function(mode) {
+            periodMode = mode;
+            const monthlyBtn = document.getElementById('viewMonthlyBtn');
+            const yearlyBtn = document.getElementById('viewYearlyBtn');
+
+            if (mode === 'monthly') {
+                monthlyBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-brand-700 shadow-sm transition';
+                yearlyBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-100 hover:text-white transition';
+                document.getElementById('balanceSubtitle').textContent = 'សមតុល្យនៅសល់ប្រចាំខែ';
+            } else {
+                yearlyBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-brand-700 shadow-sm transition';
+                monthlyBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-100 hover:text-white transition';
+                document.getElementById('balanceSubtitle').textContent = 'សមតុល្យនៅសល់ប្រចាំឆ្នាំ';
+            }
+            updateUI();
+        };
+
+        window.changePeriod = function(delta) {
+            if (periodMode === 'monthly') {
+                currentDate.setMonth(currentDate.getMonth() + delta);
+            } else {
+                currentDate.setFullYear(currentDate.getFullYear() + delta);
+            }
+            updateUI();
+        };
+
+        function getFilteredTransactionsByPeriod() {
+            const targetYear = currentDate.getFullYear();
+            const targetMonth = currentDate.getMonth() + 1;
+
+            return transactions.filter(t => {
+                if (!t.date) return false;
+                const [y, m] = t.date.split('-').map(Number);
+                if (periodMode === 'monthly') {
+                    return y === targetYear && m === targetMonth;
+                } else {
+                    return y === targetYear;
+                }
+            });
+        }
+
+        // ==========================================
+        // 6. CORE UI & DASHBOARD RENDERING
+        // ==========================================
+        function updateUI() {
+            const year = currentDate.getFullYear();
+            const monthName = KHMER_MONTHS[currentDate.getMonth()];
+            document.getElementById('currentPeriodLabel').textContent =
+                periodMode === 'monthly' ? `${monthName} ${year}` : `ឆ្នាំ ${year}`;
+
+            const periodItems = getFilteredTransactionsByPeriod();
+
+            let totalIncome = 0;
+            let foodTotal = 0;
+            let drinkTotal = 0;
+            let itemTotal = 0;
+
+            periodItems.forEach(item => {
+                const amt = Number(item.amountUSD) || 0;
+                if (item.category === 'income') {
+                    totalIncome += amt;
+                } else if (item.category === 'food') {
+                    foodTotal += amt;
+                } else if (item.category === 'drink') {
+                    drinkTotal += amt;
+                } else if (item.category === 'item') {
+                    itemTotal += amt;
+                }
+            });
+
+            const totalExpense = foodTotal + drinkTotal + itemTotal;
+            const balance = totalIncome - totalExpense;
+
+            document.getElementById('totalIncomeDisplay').textContent = formatMoney(totalIncome);
+            document.getElementById('totalExpenseDisplay').textContent = formatMoney(totalExpense);
+
+            const balanceEl = document.getElementById('totalBalanceDisplay');
+            balanceEl.textContent = (balance < 0 ? '-' : '') + formatMoney(Math.abs(balance));
+            balanceEl.className = `font-num text-2xl sm:text-3xl font-extrabold tracking-tight ${balance < 0 ? 'text-rose-600' : 'text-slate-900'}`;
+
+            const badge = document.getElementById('balanceStatusBadge');
+            if (balance < 0) {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 flex items-center gap-1';
+                badge.innerHTML = `<i data-lucide="trending-down" class="w-3.5 h-3.5"></i><span>ចំណាយលើសចំណូល</span>`;
+            } else {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 flex items-center gap-1';
+                badge.innerHTML = `<i data-lucide="trending-up" class="w-3.5 h-3.5"></i><span>សមតុល្យវិជ្ជមាន</span>`;
+            }
+
+            document.getElementById('catFoodAmount').textContent = formatMoney(foodTotal);
+            document.getElementById('catDrinkAmount').textContent = formatMoney(drinkTotal);
+            document.getElementById('catItemAmount').textContent = formatMoney(itemTotal);
+
+            const maxCat = Math.max(totalExpense, 1);
+            document.getElementById('catFoodBar').style.width = `${(foodTotal / maxCat) * 100}%`;
+            document.getElementById('catDrinkBar').style.width = `${(drinkTotal / maxCat) * 100}%`;
+            document.getElementById('catItemBar').style.width = `${(itemTotal / maxCat) * 100}%`;
+
+            const ratio = totalIncome > 0 ? Math.min(Math.round((totalExpense / totalIncome) * 100), 999) : (totalExpense > 0 ? 100 : 0);
+            document.getElementById('expenseRatioLabel').textContent = `ចំណាយ ${ratio}% នៃចំណូល`;
+            document.getElementById('chartCenterPercent').textContent = `${Math.min(ratio, 100)}%`;
+
+            updateChart(foodTotal, drinkTotal, itemTotal);
+            renderTransactionList(periodItems);
+            lucide.createIcons();
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            expenseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ម្ហូបអាហារ', 'ភេសជ្ជៈ', 'សម្ភារៈប្រើប្រាស់'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#e2e8f0'],
+                        borderWidth: 0,
+                        hoverOffset: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '72%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        function updateChart(food, drink, item) {
+            if (!expenseChartInstance) return;
+            const total = food + drink + item;
+            if (total === 0) {
+                expenseChartInstance.data.datasets[0].data = [1];
+                expenseChartInstance.data.datasets[0].backgroundColor = ['#e2e8f0'];
+            } else {
+                expenseChartInstance.data.datasets[0].data = [food, drink, item];
+                expenseChartInstance.data.datasets[0].backgroundColor = ['#f97316', '#0ea5e9', '#a855f7'];
+            }
+            expenseChartInstance.update();
+        }
+
+        window.setHistoryFilter = function(filter) {
+            historyFilter = filter;
+            document.querySelectorAll('.filter-pill').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.className = 'filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-600 text-white shrink-0 transition';
+                } else {
+                    btn.className = 'filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition';
+                }
+            });
+            updateUI();
+        };
+
+        function renderTransactionList(periodItems) {
+            const listEl = document.getElementById('transactionList');
+            const filtered = historyFilter === 'all'
+                ? periodItems
+                : periodItems.filter(item => item.category === historyFilter);
+
+            // Sort newest date first, then newest createdAt
+            filtered.sort((a, b) => {
+                const dateDiff = new Date(b.date) - new Date(a.date);
+                if (dateDiff !== 0) return dateDiff;
+                return (b.createdAt || 0) - (a.createdAt || 0);
+            });
+
+            document.getElementById('recordCountBadge').textContent = `${filtered.length} ប្រតិបត្តិការ`;
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-8 px-4">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2.5">
+                            <i data-lucide="inbox" class="w-6 h-6"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-500">មិនទាន់មានទិន្នន័យកត់ត្រាទេ</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">សូមចុចប៊ូតុង "កត់ត្រាថ្មី" ខាងក្រោមដើម្បីបន្ថែម</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const badgeStyles = {
+                income: { bg: 'bg-emerald-100 text-emerald-600', icon: 'banknote', label: 'ចំណូល', sign: '+', amountColor: 'text-emerald-600' },
+                food:   { bg: 'bg-orange-100 text-orange-600', icon: 'utensils', label: 'ម្ហូបអាហារ', sign: '-', amountColor: 'text-slate-800' },
+                drink:  { bg: 'bg-sky-100 text-sky-600', icon: 'coffee', label: 'ភេសជ្ជៈ', sign: '-', amountColor: 'text-slate-800' },
+                item:   { bg: 'bg-purple-100 text-purple-600', icon: 'shopping-bag', label: 'សម្ភារៈ', sign: '-', amountColor: 'text-slate-800' }
+            };
+
+            listEl.innerHTML = filtered.map(item => {
+                const style = badgeStyles[item.category] || badgeStyles.food;
+                const displayAmt = formatMoney(Number(item.amountUSD) || 0);
+                const subAmt = item.originalCurrency === 'KHR'
+                    ? `${Number(item.originalAmount).toLocaleString()} ៛`
+                    : `$${Number(item.originalAmount).toFixed(2)}`;
+
+                return `
+                    <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 hover:bg-slate-100/80 border border-slate-100 transition group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 rounded-2xl ${style.bg} flex items-center justify-center shrink-0">
+                                <i data-lucide="${style.icon}" class="w-4 h-4"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="text-xs sm:text-sm font-bold text-slate-800 truncate">${escapeHTML(item.name)}</h4>
+                                <div class="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                                    <span>${style.label}</span>
+                                    <span>•</span>
+                                    <span>${formatKhmerDate(item.date)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                            <div class="text-right mr-1">
+                                <span class="font-num font-bold text-xs sm:text-sm ${style.amountColor} block">${style.sign}${displayAmt}</span>
+                                <span class="font-num text-[10px] text-slate-400 block">${subAmt}</span>
+                            </div>
+                            <button onclick="openEditModal('${item.id}')" class="p-2 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition" title="កែប្រែ">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="confirmDeleteTransaction('${item.id}')" class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="លុប">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        // ==========================================
+        // 7. MODAL & CLOUD FORM SUBMISSION (CREATE & EDIT)
+        // ==========================================
+        window.openEntryModal = function(category = 'food') {
+            const modal = document.getElementById('entryModal');
+            modal.classList.remove('hidden');
+
+            document.getElementById('entryId').value = '';
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('entryDate').value = todayStr;
+            document.getElementById('entryName').value = '';
+            document.getElementById('entryAmount').value = '';
+            setInputCurrency(displayCurrency);
+
+            switchModalTab(category);
+            lucide.createIcons();
+        };
+
+        window.openEditModal = function(id) {
+            const item = transactions.find(t => t.id === id);
+            if (!item) return;
+
+            const modal = document.getElementById('entryModal');
+            modal.classList.remove('hidden');
+
+            document.getElementById('entryId').value = item.id;
+            document.getElementById('entryDate').value = item.date;
+            document.getElementById('entryName').value = item.name;
+            document.getElementById('entryAmount').value = item.originalAmount;
+            setInputCurrency(item.originalCurrency || 'USD');
+
+            switchModalTab(item.category, true);
+            lucide.createIcons();
+        };
+
+        window.closeEntryModal = function() {
+            document.getElementById('entryModal').classList.add('hidden');
+            document.getElementById('entryId').value = '';
+        };
+
+        window.switchModalTab = function(category, isEdit = false) {
+            document.getElementById('entryCategory').value = category;
+            const config = MENU_CONFIG[category];
+            const editingId = document.getElementById('entryId').value;
+            const editMode = isEdit || Boolean(editingId);
+
+            document.getElementById('modalTitle').textContent = editMode
+                ? `កែប្រែ៖ ${config.title}`
+                : config.title;
+            document.getElementById('nameInputLabel').textContent = config.nameLabel;
+            document.getElementById('entryName').placeholder = config.placeholder;
+
+            ['income', 'food', 'drink', 'item'].forEach(tab => {
+                const el = document.getElementById(`tab-${tab}`);
+                if (tab === category) {
+                    const activeColor = tab === 'income' ? 'bg-emerald-600 text-white shadow-xs'
+                        : tab === 'food' ? 'bg-orange-500 text-white shadow-xs'
+                        : tab === 'drink' ? 'bg-sky-500 text-white shadow-xs'
+                        : 'bg-purple-600 text-white shadow-xs';
+                    el.className = `modal-tab py-2 px-1 rounded-xl text-xs font-bold transition text-center ${activeColor}`;
+                } else {
+                    el.className = 'modal-tab py-2 px-1 rounded-xl text-xs font-bold transition text-center text-slate-600 hover:bg-white/60';
+                }
+            });
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.className = category === 'income'
+                ? 'w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2 mt-2'
+                : 'w-full py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-brand-600/25 transition flex items-center justify-center gap-2 mt-2';
+
+            const chipsContainer = document.getElementById('presetChips');
+            chipsContainer.innerHTML = config.presets.map(preset => `
+                <button type="button" onclick="selectPreset('${preset}')"
+                    class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200 border border-transparent text-xs font-medium text-slate-700 transition active:scale-95">
+                    ${preset}
+                </button>
+            `).join('');
+        };
+
+        window.selectPreset = function(text) {
+            const nameInput = document.getElementById('entryName');
+            nameInput.value = text;
+            document.getElementById('entryAmount').focus();
+        };
+
+        window.setInputCurrency = function(curr) {
+            inputCurrency = curr;
+            const usdBtn = document.getElementById('inputCurrUSD');
+            const khrBtn = document.getElementById('inputCurrKHR');
+
+            if (curr === 'USD') {
+                usdBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-num font-bold bg-white text-brand-700 shadow-xs transition';
+                khrBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-num font-bold text-slate-500 transition';
+            } else {
+                khrBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-num font-bold bg-white text-brand-700 shadow-xs transition';
+                usdBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-num font-bold text-slate-500 transition';
+            }
+            updateConversionHint();
+        };
+
+        document.getElementById('entryAmount').addEventListener('input', updateConversionHint);
+
+        function updateConversionHint() {
+            const val = parseFloat(document.getElementById('entryAmount').value) || 0;
+            const hintEl = document.getElementById('conversionHint');
+            if (inputCurrency === 'USD') {
+                const khr = Math.round(val * EXCHANGE_RATE).toLocaleString('en-US');
+                hintEl.textContent = `ស្មើនឹងប្រហែល ${khr} ៛`;
+            } else {
+                const usd = (val / EXCHANGE_RATE).toFixed(2);
+                hintEl.textContent = `ស្មើនឹងប្រហែល $${usd} USD`;
+            }
+        }
+
+        window.handleFormSubmit = async function(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                showToast('សូមចូលប្រើប្រាស់គណនីជាមុនសិន!');
+                return;
+            }
+
+            const category = document.getElementById('entryCategory').value;
+            const name = document.getElementById('entryName').value.trim();
+            const rawAmount = parseFloat(document.getElementById('entryAmount').value);
+            const date = document.getElementById('entryDate').value;
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = editMode
+                ? `<i data-lucide="check" class="w-4 h-4"></i><span>រក្សាទុកការកែប្រែ</span>`
+                : `<i data-lucide="save" class="w-4 h-4"></i><span>រក្សាទុកទិន្នន័យ</span>`;
+            submitBtn.className = category === 'income'
+                ? 'w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2 mt-2'
+                : 'w-full py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-brand-600/25 transition flex items-center justify-center gap-2 mt-2';
+
+            const chipsContainer = document.getElementById('presetChips');
+            chipsContainer.innerHTML = config.presets.map(preset => `
+                <button type="button" onclick="selectPreset('${preset}')"
+                    class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200 border border-transparent text-xs font-medium text-slate-700 transition active:scale-95">
+                    ${preset}
+                </button>
+            `).join('');
+            lucide.createIcons();
+        };
+
+        window.selectPreset = function(text) {
+            const nameInput = document.getElementById('entryName');
+            nameInput.value = text;
+            document.getElementById('entryAmount').focus();
+        };
+
+        window.setInputCurrency = function(curr) {
+            inputCurrency = curr;
+            const usdBtn = document.getElementById('inputCurrUSD');
+            const khrBtn = document.getElementById('inputCurrKHR');
+
+            if (curr === 'USD') {
+                usdBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-num font-bold bg-white text-brand-700 shadow-xs transition';
+                khrBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-num font-bold text-slate-500 transition';
+            } else {
+                khrBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-num font-bold bg-white text-brand-700 shadow-xs transition';
+                usdBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-num font-bold text-slate-500 transition';
+            }
+            updateConversionHint();
+        };
+
+        document.getElementById('entryAmount').addEventListener('input', updateConversionHint);
+
+        function updateConversionHint() {
+            const val = parseFloat(document.getElementById('entryAmount').value) || 0;
+            const hintEl = document.getElementById('conversionHint');
+            if (inputCurrency === 'USD') {
+                const khr = Math.round(val * EXCHANGE_RATE).toLocaleString('en-US');
+                hintEl.textContent = `ស្មើនឹងប្រហែល ${khr} ៛`;
+            } else {
+                const usd = (val / EXCHANGE_RATE).toFixed(2);
+                hintEl.textContent = `ស្មើនឹងប្រហែល $${usd} USD`;
+            }
+        }
+
+        window.handleFormSubmit = async function(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('entryId').value;
+            const category = document.getElementById('entryCategory').value;
+            const name = document.getElementById('entryName').value.trim();
+            const rawAmount = parseFloat(document.getElementById('entryAmount').value);
+            const date = document.getElementById('entryDate').value;
+
+            if (!name || isNaN(rawAmount) || rawAmount <= 0 || !date) {
+                showToast('សូមបំពេញឈ្មោះ និងចំនួនទឹកប្រាក់ឲ្យបានត្រឹមត្រូវ!');
+                return;
+            }
+
+            const amountUSD = inputCurrency === 'USD' ? rawAmount : (rawAmount / EXCHANGE_RATE);
+
+            try {
+                if (editId) {
+                    const idx = transactions.findIndex(t => t.id === editId);
+                    if (idx !== -1) {
+                        transactions[idx] = {
+                            ...transactions[idx],
+                            category,
+                            name,
+                            amountUSD,
+                            originalAmount: rawAmount,
+                            originalCurrency: inputCurrency,
+                            date,
+                            updatedAt: Date.now()
+                        };
+                        saveToLocalStorage();
+                    }
+
+                    if (currentUser) {
+                        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions', editId);
+                        updateDoc(docRef, {
+                            category,
+                            name,
+                            amountUSD,
+                            originalAmount: rawAmount,
+                            originalCurrency: inputCurrency,
+                            date,
+                            updatedAt: Date.now()
+                        }).catch(() => {});
+                    }
+                    showToast('បានកែប្រែ និងរក្សាទុកជោគជ័យ!');
+                } else {
+                    const localId = 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+                    const newRecord = {
+                        id: localId,
+                        category,
+                        name,
+                        amountUSD,
+                        originalAmount: rawAmount,
+                        originalCurrency: inputCurrency,
+                        date,
+                        createdAt: Date.now()
+                    };
+
+                    transactions.unshift(newRecord);
+                    saveToLocalStorage();
+
+                    if (currentUser) {
+                        const txColRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions');
+                        addDoc(txColRef, {
+                            category,
+                            name,
+                            amountUSD,
+                            originalAmount: rawAmount,
+                            originalCurrency: inputCurrency,
+                            date,
+                            createdAt: Date.now()
+                        }).catch(() => {});
+                    }
+                    showToast('បានរក្សាទុកជារៀងរហូតជោគជ័យ!');
+                }
+
+                const [y, m] = date.split('-').map(Number);
+                currentDate = new Date(y, m - 1, 1);
+                updateUI();
+                closeEntryModal();
+            } catch (error) {
+                console.error('Error saving transaction:', error);
+                showToast('មានបញ្ហាក្នុងការរក្សាទុកទិន្នន័យ!');
+            }
+        };
+
+        // ==========================================
+        // 8. DELETE PROTECTION, BACKUP & NOTIFICATIONS
+        // ==========================================
+        window.confirmDeleteTransaction = function(id) {
+            const targetItem = transactions.find(t => t.id === id);
+            const itemName = targetItem ? ` "${targetItem.name}"` : '';
+
+            document.getElementById('confirmTitle').textContent = 'បញ្ជាក់ការលុបទិន្នន័យ';
+            document.getElementById('confirmMessage').textContent =
+                `តើអ្នកពិតជាចង់លុបទិន្នន័យ${itemName} មែនទេ? ទិន្នន័យដែលបានលុបមិនអាចត្រឡប់វិញបានទេ។`;
+
+            pendingDeleteAction = async () => {
+                try {
+                    transactions = transactions.filter(t => t.id !== id);
+                    saveToLocalStorage();
+                    updateUI();
+
+                    if (currentUser) {
+                        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions', id);
+                        await deleteDoc(docRef).catch(err => console.warn('Cloud delete skipped:', err));
+                    }
+                    showToast('បានលុបទិន្នន័យរួចរាល់');
+                } catch (err) {
+                    console.error('Error deleting document:', err);
+                    showToast('មានបញ្ហាក្នុងការលុបទិន្នន័យ!');
+                }
+            };
+            document.getElementById('confirmBox').classList.remove('hidden');
+        };
+
+        document.getElementById('confirmActionBtn').addEventListener('click', async () => {
+            if (typeof pendingDeleteAction === 'function') {
+                await pendingDeleteAction();
+            }
+            closeConfirmBox();
+        });
+
+        window.closeConfirmBox = function() {
+            document.getElementById('confirmBox').classList.add('hidden');
+            pendingDeleteAction = null;
+        };
+
+        window.openSettingsModal = function() {
+            document.getElementById('settingsTotalCount').textContent = `${transactions.length} ប្រតិបត្តិការ`;
+            document.getElementById('settingsModal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.closeSettingsModal = function() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        };
+
+        window.exportBackupJSON = function() {
+            const backupPayload = {
+                app: 'Sengly Tracking',
+                exportedAt: new Date().toISOString(),
+                count: transactions.length,
+                records: transactions.map(({ id, ...rest }) => rest)
+            };
+            const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateStamp = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `Sengly-Tracking-Backup-${dateStamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('បានទាញយកឯកសារ Backup រួចរាល់!');
+        };
+
+        window.handleRestoreFile = function(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    const records = Array.isArray(parsed) ? parsed : parsed.records;
+                    if (!Array.isArray(records) || records.length === 0) {
+                        showToast('ឯកសារមិនត្រឹមត្រូវ ឬគ្មានទិន្នន័យ!');
+                        return;
+                    }
+
+                    let restoredCount = 0;
+                    for (const rec of records) {
+                        if (rec.name && rec.amountUSD && rec.category && rec.date) {
+                            const restoredItem = {
+                                id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+                                category: rec.category,
+                                name: rec.name,
+                                amountUSD: Number(rec.amountUSD),
+                                originalAmount: Number(rec.originalAmount || rec.amountUSD),
+                                originalCurrency: rec.originalCurrency || 'USD',
+                                date: rec.date,
+                                createdAt: rec.createdAt || Date.now()
+                            };
+                            transactions.unshift(restoredItem);
+
+                            if (currentUser) {
+                                const txColRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions');
+                                await addDoc(txColRef, {
+                                    category: restoredItem.category,
+                                    name: restoredItem.name,
+                                    amountUSD: restoredItem.amountUSD,
+                                    originalAmount: restoredItem.originalAmount,
+                                    originalCurrency: restoredItem.originalCurrency,
+                                    date: restoredItem.date,
+                                    createdAt: restoredItem.createdAt
+                                }).catch(() => {});
+                            }
+                            restoredCount++;
+                        }
+                    }
+                    saveToLocalStorage();
+                    updateUI();
+                    closeSettingsModal();
+                    showToast(`បានស្ដារទិន្នន័យចំនួន ${restoredCount} ប្រតិបត្តិការជោគជ័យ!`);
+                } catch (err) {
+                    console.error('Restore error:', err);
+                    showToast('មានបញ្ហាក្នុងការអានឯកសារ Backup!');
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.classList.remove('opacity-0', '-translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-4');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
